@@ -3,13 +3,10 @@ package main
 import (
 	"runtime"
 
-	_ "github.com/rodkranz/ff/autoload"
-
-	"github.com/rodkranz/ff/modules/helpers"
 	"github.com/rodkranz/ff/modules/model"
 	"github.com/rodkranz/ff/modules/search"
-	"github.com/rodkranz/ff/modules/settings"
 	"github.com/rodkranz/ff/modules/output"
+	"github.com/rodkranz/ff/modules/settings"
 )
 
 func init() {
@@ -18,17 +15,26 @@ func init() {
 
 func main() {
 	settings.Directory = settings.Directory
-	//settings.SearchText = "rodrigo"
+	settings.SearchText = "rodrigo"
+	settings.CaseInsensitive = false
+	settings.Reach = 10
+	//settings.Regexp = regexp.MustCompile("(rodkranz|rodrigo)")
+	settings.Replace = "digo"
 
 	search.Walk(func(e *model.Entity) error {
-		for _, help := range helpers.Helpers {
-			if err := help.Run(e); err != nil {
-				break;
+		e.CaseInsensitive = settings.CaseInsensitive
+		if len(settings.SearchText) != 0 {
+			if err := e.FindByText(settings.SearchText); err != nil {
+				return err
+			}
+		} else
+		if settings.Regexp != nil {
+			if err := e.FindByRegex(settings.Regexp); err != nil {
+				return err
 			}
 		}
 
 		output.PrintLn(e)
 		return nil
 	})
-
 }

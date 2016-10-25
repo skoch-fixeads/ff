@@ -14,7 +14,13 @@ func PrintLn(e *model.Entity) {
 	if len(e.Output) != 0 {
 		fmt.Printf("%v (%d)\n", e.Path, len(e.Output))
 		for i, s := range e.Output {
-			fmt.Printf("[%v]:\t %v\n", i, s)
+			if len(settings.Replace) != 0 {
+				fmt.Printf("[%v]:\t %v (y/n)?", i, s)
+				e.ReplaceLine(i, settings.Replace)
+			} else {
+				fmt.Printf("[%v]:\t %v\n", i, s)
+			}
 		}
 	}
+
 }
