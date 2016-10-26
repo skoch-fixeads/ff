@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/rodkranz/ff/modules/model"
-	"github.com/rodkranz/ff/modules/tools"
 	"github.com/rodkranz/ff/modules/settings"
+	"github.com/rodkranz/ff/modules/tools"
 	"sort"
 )
 
@@ -46,7 +46,7 @@ func Walk(cb func(e *model.Entity) error) error {
 			return nil
 		}
 
-		return cb(model.NewEntity(path))
+		return cb(model.NewEntity(path, info.IsDir()))
 	}
 
 	return filepath.Walk(settings.Directory, WalkFunc)

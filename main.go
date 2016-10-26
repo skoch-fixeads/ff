@@ -4,8 +4,8 @@ import (
 	"runtime"
 
 	"github.com/rodkranz/ff/modules/model"
-	"github.com/rodkranz/ff/modules/search"
 	"github.com/rodkranz/ff/modules/output"
+	"github.com/rodkranz/ff/modules/search"
 	"github.com/rodkranz/ff/modules/settings"
 )
 
@@ -16,10 +16,10 @@ func init() {
 func main() {
 	settings.Directory = settings.Directory
 	settings.SearchText = "rodrigo"
-	settings.CaseInsensitive = false
+	//settings.CaseInsensitive = false
 	settings.Reach = 10
 	//settings.Regexp = regexp.MustCompile("(rodkranz|rodrigo)")
-	settings.Replace = "digo"
+	//settings.Replace = "digo"
 
 	search.Walk(func(e *model.Entity) error {
 		e.CaseInsensitive = settings.CaseInsensitive
@@ -27,8 +27,7 @@ func main() {
 			if err := e.FindByText(settings.SearchText); err != nil {
 				return err
 			}
-		} else
-		if settings.Regexp != nil {
+		} else if settings.Regexp != nil {
 			if err := e.FindByRegex(settings.Regexp); err != nil {
 				return err
 			}

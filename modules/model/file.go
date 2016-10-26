@@ -3,60 +3,73 @@ package model
 import (
 	"os"
 	"bufio"
-	"strings"
 	"regexp"
-	"fmt"
+	"strings"
 )
+
+type Line struct {
+	Line string
+	Text string
+	Num  int
+	Confirmed map[int]string
+}
 
 type Entity struct {
 	Path            string
 	Error           error
 	NumLines        int
-	Output          map[int]string
-	Buffer          map[int]string
-
+	Output          []*Line
+	IsDir           bool
 	CaseInsensitive bool
 	searchText      string
 }
 
-func NewEntity(path string) *Entity {
+func NewEntity(path string, isDir bool) *Entity {
 	return &Entity{
-		Path: path,
-		Output: make(map[int]string, 0),
-		Buffer: make(map[int]string, 0),
+		Path:   path,
+		IsDir:  isDir,
+		Output: make([]*Line, 0),
 	}
 }
 
-func (e Entity) Write(i int, text string) {
-	e.Output[i] = text
+func (e *Entity) GetType() string {
+	if e.IsDir {
+		return "dir "
+	}
+
+	return "file"
 }
 
-func (e Entity) FindByRegex(regex *regexp.Regexp) error {
-	var cb = func(line string) bool {
+func (e *Entity) Write(line *Line) {
+	e.Output = append(e.Output, line)
+}
+
+func (e *Entity) FindByRegex(regex *regexp.Regexp) error {
+	return e.readLines(func(line string) {
 		words := regex.FindAllString(line, -1)
 		if len(words) > 0 {
-			return true
+			for _, v := range words {
+				e.Write(&Line{Line: line, Text: v, Num: e.NumLines})
+			}
 		}
-		return false
-	}
-
-	return e.readLines(cb)
+	})
 }
 
-func (e Entity) FindByText(text string) error {
-	var cb = func(line string) bool {
-		if (e.CaseInsensitive) {
-			return strings.Contains(line, text)
-		} else {
-			return strings.Contains(strings.ToLower(line), strings.ToLower(text))
-		}
-	}
-
+func (e *Entity) FindByText(text string) error {
 	e.searchText = text
-	return e.readLines(cb)
+	return e.readLines(func(line string) {
+		l, t := line, text
+		if !e.CaseInsensitive {
+			l, t = strings.ToLower(line), strings.ToLower(text)
+		}
+
+		if strings.Contains(l, t) {
+			e.Write(&Line{Line: l, Text: t, Num: e.NumLines})
+		}
+	})
 }
 
-func (e Entity) readLines(cb func(string) bool) error {
+func (e *Entity) readLines(cb func(string)) error {
 	file, err := os.Open(e.Path)
 	if err != nil {
 		e.Error = err
@@ -69,22 +82,7 @@ func (e Entity) readLines(cb func(string) bool) error {
 	for scanner.Scan() {
 		line := scanner.Text()
 		e.NumLines++
-
-		if cb(line) {
-			e.Write(e.NumLines, line)
-		}
-
-		e.Buffer[e.NumLines] = line
+		cb(line)
 	}
-
 	return nil
-}
-
-func (e Entity) ReplaceLine(lineNumber int, text string) error {
-	if _, has := e.Buffer[lineNumber]; has {
-		fmt.Printf("\t [%v -> %v] \n", e.searchText, text)
-		return nil
-	}
-
-	return fmt.Errorf("Line %v not found!", lineNumber)
 }
